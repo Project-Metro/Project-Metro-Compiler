@@ -62,7 +62,7 @@ namespace Project_Metro_Compiler
         public const string STANDARD_IDENTIFIER = "CD001";
         public const byte VERSION = 0x01;
         public const byte UNUSED1 = 0x00;
-        public string volumeIdentifier = "biniso primary volume";
+        public string volumeIdentifier = "biniso primary volume"; //ToDo: This can be changed, but it must comply with standards of being up to 32 characters max.
 
         public enum Offsets : int
         {
