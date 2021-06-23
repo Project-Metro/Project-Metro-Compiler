@@ -10,22 +10,26 @@ namespace Project_Metro_Compiler
     {
         //Use this to represent an ISO (see binso CD class). 
         //It would be useful to represent each section as an item within a struct, OR a class.
-        readonly PrimaryVolume primaryVolume;
-        IntPtr pPrimaryVolume;
-        readonly BootRecord bootRecord;
-        IntPtr pBootRecord;
+        private readonly PrimaryVolume primaryVolume;
+        private IntPtr pPrimaryVolume;
+        private readonly BootRecord bootRecord;
+        private IntPtr pBootRecord;
+        private readonly VolumeDescriptorSetTermination vdst;
+        private IntPtr pVdst;
+
         private bool disposedValue;
 
         public ISO()
         {
             primaryVolume = new();
             bootRecord = new();
+            vdst = new();
         }
         public void Build()
         {
-            pPrimaryVolume = primaryVolume.Build(out int _);
-            pBootRecord = bootRecord.Build(out int _);
-
+            pPrimaryVolume = primaryVolume.Build(out _);
+            pBootRecord = bootRecord.Build(out _);
+            pVdst = vdst.Build(out _);
         }
 
         protected virtual void Dispose(bool disposing)
@@ -41,6 +45,7 @@ namespace Project_Metro_Compiler
                 // TODO: set large fields to null
                 Marshal.FreeHGlobal(pPrimaryVolume);
                 Marshal.FreeHGlobal(pBootRecord);
+                Marshal.FreeHGlobal(pVdst);
                 disposedValue = true;
             }
         }
@@ -159,6 +164,11 @@ namespace Project_Metro_Compiler
             bootIdentifier = 39,
             bootSystemUse = 71,
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="allocationSize"></param>
+        /// <returns></returns>
         public IntPtr Build(out int allocationSize)
         {
             allocationSize = 2048;
@@ -187,6 +197,41 @@ namespace Project_Metro_Compiler
             Marshal.WriteByte(pBootRecord + (int)Offsets.bootSystemUse, BOOT_SYSTEM_USE);
 
             return pBootRecord;
+        }
+    }
+    public class VolumeDescriptorSetTermination : ISector
+    {
+        private const byte TYPE = 0xFF;
+        private const string IDENTIFIER = "CD001";
+        private const byte VERSION = 0x1;
+        enum Offsets
+        {
+            Type = 0,
+            Identifier = 1,
+            Version = 6,
+        }
+        public IntPtr Build(out int allocationSize)
+        {
+            allocationSize = 2048;
+            //Pad the sector to 2048 per Kris's request.
+            IntPtr pVDST = Marshal.AllocHGlobal(allocationSize);
+
+            //Zero memory.
+            for (int i = 0; i < allocationSize; i++)
+                Marshal.WriteByte(pVDST + i, 0);
+
+            //Write the Type.
+            Marshal.WriteByte(pVDST + (int)Offsets.Type, TYPE);
+
+            //Write the Identifier.
+            for (int i = 0; i < IDENTIFIER.Length; i++)
+                Marshal.WriteByte(pVDST + (int)Offsets.Identifier + i, (byte)IDENTIFIER[i]);
+
+            //Write the version
+            Marshal.WriteByte(pVDST + (int)Offsets.Version, VERSION);
+
+
+            return pVDST;
         }
     }
     public interface ISector
