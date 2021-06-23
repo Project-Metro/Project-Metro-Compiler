@@ -34,7 +34,7 @@ namespace Project_Metro_Compiler
             dataVolume = new(dataSource);
             emptySector = new();
         }
-        protected void Build()
+        protected byte[] Build()
         {
             pEmptySector = emptySector.Build(out int emptySectorSize);
             pPrimaryVolume = primaryVolume.Build(out int primaryVolumeSize);
@@ -77,9 +77,7 @@ namespace Project_Metro_Compiler
                 isoContent[bIndex] = Marshal.ReadByte(pDataVolume + i);
                 bIndex++;
             }
-            int brkp = 5;
-
-            System.IO.File.WriteAllBytes("testFile.iso", isoContent);
+            return isoContent;
         }
 
         private class EmptySector : ISector

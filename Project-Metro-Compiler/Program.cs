@@ -8,7 +8,7 @@ namespace Project_Metro_Compiler
         {
             int hresult = Parse("testFile.bin");
             Compiler compiler = new Compiler(content);
-            
+            compiler.CreateIso();
         }
     }
 }
