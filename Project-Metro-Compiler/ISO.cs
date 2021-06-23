@@ -32,7 +32,7 @@ namespace Project_Metro_Compiler
             vdst = new();
             validationEntry = new();
             dataVolume = new(dataSource);
-
+            emptySector = new();
         }
         protected void Build()
         {
