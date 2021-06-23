@@ -12,15 +12,20 @@ namespace Project_Metro_Compiler
         //It would be useful to represent each section as an item within a struct, OR a class.
         readonly PrimaryVolume primaryVolume;
         IntPtr pPrimaryVolume;
+        readonly BootRecord bootRecord;
+        IntPtr pBootRecord;
         private bool disposedValue;
 
         public ISO()
         {
             primaryVolume = new();
+            bootRecord = new();
         }
         public void Build()
         {
-            pPrimaryVolume = primaryVolume.Build(out int allocationSize);
+            pPrimaryVolume = primaryVolume.Build(out int _);
+            pBootRecord = bootRecord.Build(out int _);
+
         }
 
         protected virtual void Dispose(bool disposing)
@@ -56,7 +61,7 @@ namespace Project_Metro_Compiler
     /// <summary>
     /// <see cref="https://wiki.osdev.org/ISO_9660#The_Primary_Volume_Descriptor"/>
     /// </summary>
-    public class PrimaryVolume
+    public class PrimaryVolume : ISector
     {
         public const byte TYPE_CODE = 0x1;
         public const string STANDARD_IDENTIFIER = "CD001";
@@ -64,7 +69,7 @@ namespace Project_Metro_Compiler
         public const byte UNUSED1 = 0x00;
         public string volumeIdentifier = "biniso primary volume"; //ToDo: This can be changed, but it must comply with standards of being up to 32 characters max.
 
-        public enum Offsets : int
+        private enum Offsets : int
         {
             typeCode = 0,
             standardIdentifier = 1,
@@ -137,4 +142,54 @@ namespace Project_Metro_Compiler
             return pPrimaryVolume;
         }
     };
+    public class BootRecord : ISector
+    {
+        public byte type = 0;
+        public const string IDENTIFIER = "CD001";
+        public const byte VERSION = 0x1;
+        public string bootSystemIdentifier = "EL TORITO SPECIFICATION";
+        public const byte BOOT_SYSTEM_USE = 0x13; //ToDo: Kris, this is hardcoded in your code for valdiation entry, will it always be 0x13?
+        private enum Offsets
+        {
+            type = 0,
+            identifier = 1,
+            version = 6,
+            bootSystemIdentifier = 7,
+            bootIdentifier = 39,
+            bootSystemUse = 71,
+        }
+        public IntPtr Build(out int allocationSize)
+        {
+            allocationSize = 2048;
+            IntPtr pBootRecord = Marshal.AllocCoTaskMem(allocationSize);
+
+            //Zero memory.
+            for (int i = 0; i < allocationSize; i++)
+                Marshal.WriteByte(pBootRecord + i, 0);
+
+            //Write the Type.
+            Marshal.WriteByte(pBootRecord + (int)Offsets.type, type);
+
+            //Write the Identifier.
+            for (int i = 0; i < IDENTIFIER.Length; i++)
+                Marshal.WriteByte(pBootRecord + (int)Offsets.identifier + i, (byte)IDENTIFIER[i]);
+
+            //Write the Version.
+            Marshal.WriteByte(pBootRecord + (int)Offsets.version, VERSION);
+
+            //Write the boot system identifier.
+            for (int i = 0; i < bootSystemIdentifier.Length; i++)
+                Marshal.WriteByte(pBootRecord + (int)Offsets.bootSystemIdentifier + i, (byte)bootSystemIdentifier[i]);
+
+
+            //Write the validation entry index.
+            Marshal.WriteByte(pBootRecord + (int)Offsets.bootSystemUse, BOOT_SYSTEM_USE);
+
+            return pBootRecord;
+        }
+    }
+    public interface ISector
+    {
+        IntPtr Build(out int allocationSize);
+    }
 }
