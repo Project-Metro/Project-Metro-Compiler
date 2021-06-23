@@ -4,32 +4,39 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
+using static Project_Metro_Compiler.MemoryMethods;
 namespace Project_Metro_Compiler
 {
     class ISO : IDisposable
     {
-        //Use this to represent an ISO (see binso CD class). 
-        //It would be useful to represent each section as an item within a struct, OR a class.
         private readonly PrimaryVolume primaryVolume;
         private IntPtr pPrimaryVolume;
         private readonly BootRecord bootRecord;
         private IntPtr pBootRecord;
         private readonly VolumeDescriptorSetTermination vdst;
         private IntPtr pVdst;
+        private readonly ValidationEntry validationEntry;
+        private IntPtr pValidationEntry;
+
+        private byte[] dataSource;
 
         private bool disposedValue;
 
-        public ISO()
+        public ISO(byte[] dataSource)
         {
+            this.dataSource = dataSource;
             primaryVolume = new();
             bootRecord = new();
             vdst = new();
+            validationEntry = new();
+
         }
         public void Build()
         {
             pPrimaryVolume = primaryVolume.Build(out _);
             pBootRecord = bootRecord.Build(out _);
             pVdst = vdst.Build(out _);
+            pValidationEntry =  validationEntry.Build(out _);
         }
 
         protected virtual void Dispose(bool disposing)
@@ -46,16 +53,16 @@ namespace Project_Metro_Compiler
                 Marshal.FreeHGlobal(pPrimaryVolume);
                 Marshal.FreeHGlobal(pBootRecord);
                 Marshal.FreeHGlobal(pVdst);
+                Marshal.FreeHGlobal(pValidationEntry);
                 disposedValue = true;
             }
         }
 
-        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
-        // ~ISO()
-        // {
-        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        //     Dispose(disposing: false);
-        // }
+         ~ISO()
+         {
+             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+             Dispose(disposing: false);
+         }
 
         public void Dispose()
         {
@@ -121,16 +128,14 @@ namespace Project_Metro_Compiler
             allocationSize = 2048;
             IntPtr pPrimaryVolume = Marshal.AllocHGlobal(allocationSize);
 
-            //Zero memory.
-            for (int i = 0; i < allocationSize; i++)
-                Marshal.WriteByte(pPrimaryVolume+i, 0);
+
+            ZeroMemory(pPrimaryVolume, allocationSize);
             
             //Write the Type Code.
             Marshal.WriteByte(pPrimaryVolume + (int)Offsets.typeCode, TYPE_CODE);
 
             //Write the Standard Identifier.
-            for (int i = 0; i < STANDARD_IDENTIFIER.Length; i++)
-                Marshal.WriteByte(pPrimaryVolume + (int)Offsets.standardIdentifier + i, (byte)STANDARD_IDENTIFIER[i]);
+            WriteString(pPrimaryVolume + (int)Offsets.standardIdentifier, STANDARD_IDENTIFIER);
 
             //Write the Version.
             Marshal.WriteByte(pPrimaryVolume+(int)Offsets.version, VERSION);
@@ -148,6 +153,9 @@ namespace Project_Metro_Compiler
             return pPrimaryVolume;
         }
     };
+    /// <summary>
+    /// <see cref="https://wiki.osdev.org/ISO_9660#The_Primary_Volume_Descriptor"/>
+    /// </summary>
     public class BootRecord : ISector
     {
         public byte type = 0;
@@ -174,16 +182,13 @@ namespace Project_Metro_Compiler
             allocationSize = 2048;
             IntPtr pBootRecord = Marshal.AllocCoTaskMem(allocationSize);
 
-            //Zero memory.
-            for (int i = 0; i < allocationSize; i++)
-                Marshal.WriteByte(pBootRecord + i, 0);
+            ZeroMemory(pBootRecord, allocationSize);
 
             //Write the Type.
             Marshal.WriteByte(pBootRecord + (int)Offsets.type, type);
 
             //Write the Identifier.
-            for (int i = 0; i < IDENTIFIER.Length; i++)
-                Marshal.WriteByte(pBootRecord + (int)Offsets.identifier + i, (byte)IDENTIFIER[i]);
+            WriteString(pBootRecord + (int)Offsets.identifier, IDENTIFIER);
 
             //Write the Version.
             Marshal.WriteByte(pBootRecord + (int)Offsets.version, VERSION);
@@ -199,6 +204,9 @@ namespace Project_Metro_Compiler
             return pBootRecord;
         }
     }
+    /// <summary>
+    /// <see cref="https://wiki.osdev.org/ISO_9660#The_Primary_Volume_Descriptor"/>
+    /// </summary>
     public class VolumeDescriptorSetTermination : ISector
     {
         private const byte TYPE = 0xFF;
@@ -216,22 +224,70 @@ namespace Project_Metro_Compiler
             //Pad the sector to 2048 per Kris's request.
             IntPtr pVDST = Marshal.AllocHGlobal(allocationSize);
 
-            //Zero memory.
-            for (int i = 0; i < allocationSize; i++)
-                Marshal.WriteByte(pVDST + i, 0);
+            ZeroMemory(pVDST, allocationSize);
 
             //Write the Type.
             Marshal.WriteByte(pVDST + (int)Offsets.Type, TYPE);
 
             //Write the Identifier.
-            for (int i = 0; i < IDENTIFIER.Length; i++)
-                Marshal.WriteByte(pVDST + (int)Offsets.Identifier + i, (byte)IDENTIFIER[i]);
+            WriteString(pVDST + (int)Offsets.Identifier, IDENTIFIER);
 
             //Write the version
             Marshal.WriteByte(pVDST + (int)Offsets.Version, VERSION);
 
 
             return pVDST;
+        }
+    }
+    /// <summary>
+    /// <see cref="https://pdos.csail.mit.edu/6.828/2014/readings/boot-cdrom.pdf"/>
+    /// </summary>
+    public class ValidationEntry : ISector
+    {
+        private const byte HEADER_ID = 0x1;
+        public byte platformId = 0;
+        private const short RESERVED = 0;
+        public string idString = "biniso boot record"; //Must be less or equal to 23 characters.
+        private const short checksumWord = 0;
+        private const byte KEY_BYTE_1 = 0x55;
+        private const byte KEY_BYTE_2 = 0xAA;
+        enum Offsets
+        {
+            headerId = 0,
+            platformId = 1,
+            reserved = 2,
+            idString = 4,
+            checksumWord = 28,
+            keyByte1 = 30,
+            keyByte2 = 31
+        }
+        public IntPtr Build(out int allocationSize)
+        {
+            allocationSize = 2048;
+            IntPtr pValidationEntry = Marshal.AllocHGlobal(allocationSize);
+
+            ZeroMemory(pValidationEntry, allocationSize);
+
+            //Write the Header ID.
+            Marshal.WriteByte(pValidationEntry + (int)Offsets.headerId, HEADER_ID);
+
+            //Write the Platform ID.
+            Marshal.WriteByte(pValidationEntry + (int)Offsets.platformId, platformId);
+
+            //Write the reserved bytes.
+            Marshal.WriteInt16(pValidationEntry + (int)Offsets.reserved, RESERVED);
+
+            //Write the identifier
+            WriteString(pValidationEntry + (int)Offsets.idString, idString);
+
+            //Write the checksum word.
+            Marshal.WriteInt16(pValidationEntry + (int)Offsets.checksumWord, checksumWord);
+
+            //Write the key bytes
+            Marshal.WriteByte(pValidationEntry + (int)Offsets.keyByte1, KEY_BYTE_1);
+            Marshal.WriteByte(pValidationEntry + (int)Offsets.keyByte2, KEY_BYTE_2);
+
+            return pValidationEntry;
         }
     }
     public interface ISector
