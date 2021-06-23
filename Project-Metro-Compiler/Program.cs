@@ -6,7 +6,7 @@ namespace Project_Metro_Compiler
     {
         static void Main(string[] args)
         {
-            int hresult = Parse(@"C:\Users\Harry\AppData\Local\bin\NASM\boot.bin");
+            int hresult = Parse("testFile.bin");
 
             ISO newIso = new ISO(content);
             newIso.Build();
