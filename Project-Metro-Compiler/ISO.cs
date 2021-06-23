@@ -270,6 +270,9 @@ namespace Project_Metro_Compiler
             private const short checksumWord = 0;
             private const byte KEY_BYTE_1 = 0x55;
             private const byte KEY_BYTE_2 = 0xAA;
+            public byte bootIndicator = 0x88;
+            public short sectorCount = 0x1;
+            public int loadRba = 0x14;
             enum Offsets
             {
                 headerId = 0,
@@ -278,7 +281,16 @@ namespace Project_Metro_Compiler
                 idString = 4,
                 checksumWord = 28,
                 keyByte1 = 30,
-                keyByte2 = 31
+                keyByte2 = 31,
+
+                bootIndicator = 32,
+                bootMediaType = 33,
+                loadSegment = 34,
+                systemType = 36,
+                unused1 = 37,
+                sectorCount = 38,
+                loadRba = 40,
+                unused2 = 44,
             }
             public IntPtr Build(out int allocationSize)
             {
@@ -302,13 +314,23 @@ namespace Project_Metro_Compiler
                 //Write the checksum word.
                 Marshal.WriteInt16(pValidationEntry + (int)Offsets.checksumWord, checksumWord);
 
-                //Write the key bytes
+                //Write the key bytes.
                 Marshal.WriteByte(pValidationEntry + (int)Offsets.keyByte1, KEY_BYTE_1);
                 Marshal.WriteByte(pValidationEntry + (int)Offsets.keyByte2, KEY_BYTE_2);
+
+                //Write the boot indicator.
+                Marshal.WriteByte(pValidationEntry + (int)Offsets.bootIndicator, bootIndicator);
+
+                //Write the sector count.
+                Marshal.WriteInt16(pValidationEntry + (int)Offsets.sectorCount, sectorCount);
+
+                //Write the load rba value.
+                Marshal.WriteInt32(pValidationEntry + (int)Offsets.loadRba, loadRba);
 
                 return pValidationEntry;
             }
         }
+
         /// <summary>
         /// Please add a source.
         /// </summary>
