@@ -15,6 +15,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Update="testFile.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="testFile.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

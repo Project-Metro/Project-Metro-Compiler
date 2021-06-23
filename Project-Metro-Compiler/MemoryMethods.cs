@@ -14,6 +14,7 @@ namespace Project_Metro_Compiler
         {
             for (int i = 0; i < value.Length; i++)
                 Marshal.WriteByte(destination +  i, (byte)value[i]);
+        
         }
     }
 }

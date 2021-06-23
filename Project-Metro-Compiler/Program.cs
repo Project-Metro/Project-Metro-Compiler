@@ -7,9 +7,11 @@ namespace Project_Metro_Compiler
         static void Main(string[] args)
         {
             int hresult = Parse("testFile.bin");
+            Compiler compiler = new Compiler(content);
+            
 
-            ISO newIso = new ISO(content);
-            newIso.Build();
+            //ISO newIso = new(content);
+            //newIso.Build();
         }
     }
 }
