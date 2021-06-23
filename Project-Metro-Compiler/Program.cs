@@ -6,7 +6,8 @@ namespace Project_Metro_Compiler
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            ISO newIso = new ISO();
+            newIso.Build();
         }
     }
 }
