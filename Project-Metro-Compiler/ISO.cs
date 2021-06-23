@@ -40,6 +40,7 @@ namespace Project_Metro_Compiler
                 // TODO: free unmanaged resources (unmanaged objects) and override finalizer
                 // TODO: set large fields to null
                 Marshal.FreeHGlobal(pPrimaryVolume);
+                Marshal.FreeHGlobal(pBootRecord);
                 disposedValue = true;
             }
         }
