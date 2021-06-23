@@ -377,6 +377,7 @@ namespace Project_Metro_Compiler
                 Marshal.FreeHGlobal(pVdst);
                 Marshal.FreeHGlobal(pValidationEntry);
                 Marshal.FreeHGlobal(pDataVolume);
+                Marshal.FreeHGlobal(pEmptySector);
                 disposedValue = true;
             }
         }
