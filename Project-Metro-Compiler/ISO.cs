@@ -19,6 +19,8 @@ namespace Project_Metro_Compiler
         private IntPtr pValidationEntry;
         private readonly DataVolume dataVolume;
         private IntPtr pDataVolume;
+        private readonly EmptySector emptySector;
+        private IntPtr pEmptySector;
 
         private bool disposedValue;
 
@@ -34,18 +36,18 @@ namespace Project_Metro_Compiler
         }
         protected void Build()
         {
+            pEmptySector = emptySector.Build(out int emptySectorSize);
             pPrimaryVolume = primaryVolume.Build(out int primaryVolumeSize);
             pBootRecord = bootRecord.Build(out int bootRecordSize);
             pVdst = vdst.Build(out int vdstSize);
             pValidationEntry =  validationEntry.Build(out int validationEntrySize);
             pDataVolume = dataVolume.Build(out int dataVolumeSize);
 
-            int isoSize = primaryVolumeSize + bootRecordSize + vdstSize + validationEntrySize + dataVolumeSize + 0x7FFF;
+            int isoSize = primaryVolumeSize + bootRecordSize + vdstSize + validationEntrySize + dataVolumeSize + 0x8000;
             byte[] isoContent = new byte[isoSize];
 
             int bIndex = 0;
-            //empty sector
-            for (int i = 0; i < 0x7FFF; i++)
+            for (int i = 0; i < emptySectorSize; i++)
             {
                 isoContent[bIndex] = 0;
                 bIndex++;
@@ -80,7 +82,16 @@ namespace Project_Metro_Compiler
             System.IO.File.WriteAllBytes("testFile.iso", isoContent);
         }
 
-
+        private class EmptySector : ISector
+        {
+            public IntPtr Build(out int allocationSize)
+            {
+                allocationSize = 0x8000;
+                IntPtr pEmptySector = Marshal.AllocHGlobal(allocationSize);
+                ZeroMemory(pEmptySector, allocationSize);
+                return pEmptySector;
+            }
+        }
         /// <summary>
         /// <see cref="https://wiki.osdev.org/ISO_9660#The_Primary_Volume_Descriptor"/>
         /// </summary>
@@ -206,7 +217,6 @@ namespace Project_Metro_Compiler
                 for (int i = 0; i < bootSystemIdentifier.Length; i++)
                     Marshal.WriteByte(pBootRecord + (int)Offsets.bootSystemIdentifier + i, (byte)bootSystemIdentifier[i]);
 
-
                 //Write the validation entry index.
                 Marshal.WriteByte(pBootRecord + (int)Offsets.bootSystemUse, BOOT_SYSTEM_USE);
 
@@ -304,7 +314,7 @@ namespace Project_Metro_Compiler
         /// </summary>
         private class DataVolume : ISector
         {
-            private byte[] dataSource;
+            private readonly byte[] dataSource;
             public DataVolume(byte[] dataSource)
             {
                 this.dataSource = dataSource;
