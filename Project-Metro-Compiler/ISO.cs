@@ -10,7 +10,7 @@ namespace Project_Metro_Compiler
     {
         //Use this to represent an ISO (see binso CD class). 
         //It would be useful to represent each section as an item within a struct, OR a class.
-        PrimaryVolume primaryVolume;
+        readonly PrimaryVolume primaryVolume;
         IntPtr pPrimaryVolume;
         private bool disposedValue;
 
