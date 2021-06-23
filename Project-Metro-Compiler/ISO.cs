@@ -43,7 +43,7 @@ namespace Project_Metro_Compiler
             pValidationEntry =  validationEntry.Build(out int validationEntrySize);
             pDataVolume = dataVolume.Build(out int dataVolumeSize);
 
-            int isoSize = primaryVolumeSize + bootRecordSize + vdstSize + validationEntrySize + dataVolumeSize + 0x8000;
+            int isoSize = primaryVolumeSize + bootRecordSize + vdstSize + validationEntrySize + dataVolumeSize + emptySectorSize;
             byte[] isoContent = new byte[isoSize];
 
             int bIndex = 0;
