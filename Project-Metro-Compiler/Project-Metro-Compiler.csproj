@@ -15,6 +15,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Update="invaders.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="testFile.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

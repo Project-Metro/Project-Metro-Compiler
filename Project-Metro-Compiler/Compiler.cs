@@ -13,10 +13,17 @@ namespace Project_Metro_Compiler
         {
            isoContent = Build();
         }
-        public void CreateIso()
+        public void CreateIso(string fileName)
         {
-            //ToDo: add exception handling and naming of file.
-            File.WriteAllBytes("testFile.iso", isoContent);
+
+            try
+            {
+                File.WriteAllBytes(fileName, isoContent);
+            } catch (Exception e)
+            {
+                Console.WriteLine($"exception: {e}");
+            }
+
         }
   
     }

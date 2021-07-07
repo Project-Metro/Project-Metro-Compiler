@@ -4,11 +4,22 @@ namespace Project_Metro_Compiler
 {
     class Program
     {
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
-            int hresult = Parse("testFile.bin");
+
+            // command line arguments should be provided for source & target file
+            // [0] = source file, [1] = target file -- file extensions must be provided
+
+            if(args.Length != 2)
+            {
+                Console.WriteLine($"Incorrect number of arguments given.\nExpected 2, got {args.Length}.");
+                return -1;
+            }
+
+            int hresult = Parse(args[0]);
             Compiler compiler = new Compiler(content);
-            compiler.CreateIso();
+            compiler.CreateIso(args[1]);
+            return 0;
         }
     }
 }
