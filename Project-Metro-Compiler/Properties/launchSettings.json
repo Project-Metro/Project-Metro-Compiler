@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Project-Metro-Compiler": {
+      "commandName": "Project",
+      "commandLineArgs": "testFile.txt testFile.iso"
+    }
+  }
+}
