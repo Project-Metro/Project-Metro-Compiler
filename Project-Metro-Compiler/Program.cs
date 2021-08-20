@@ -20,16 +20,16 @@ namespace Project_Metro_Compiler
             // command line arguments should be provided for source & target file
             // [0] = source file, [1] = target file -- file extensions must be provided
 
-            if(args.Length != 2)
+            if (args.Length != 2)
             {
                 Console.WriteLine($"Incorrect number of arguments given.\nExpected 2, got {args.Length}. Exiting");
                 return -1;
             }
-            if(!File.Exists("Resources\\License"))
+            if (!File.Exists("Resources\\License"))
             {
                 Console.WriteLine("Unable to find NASM license file. Exiting\n");
                 return -1;
-            }   
+            }
             Console.WriteLine("**********************************************************************");
             Console.WriteLine(File.ReadAllText("Resources\\License"));
             Console.WriteLine("**********************************************************************");
@@ -55,7 +55,7 @@ namespace Project_Metro_Compiler
             }
 
             string nasmResult = pNasm.StandardError.ReadToEnd();
-            if(nasmResult != "")
+            if (nasmResult != "")
             {
                 MarkLineAsFailed();
                 Console.WriteLine(nasmResult);

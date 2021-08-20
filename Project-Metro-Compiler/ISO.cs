@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 using static Project_Metro_Compiler.MemoryMethods;
 namespace Project_Metro_Compiler
@@ -54,7 +50,7 @@ namespace Project_Metro_Compiler
             MarkLineAsComplete();
 
             Console.Write("Validating the validation entry...");
-            pValidationEntry =  validationEntry.Build(out int validationEntrySize);
+            pValidationEntry = validationEntry.Build(out int validationEntrySize);
             MarkLineAsComplete();
 
             Console.Write("Populating the data volume...");
@@ -399,11 +395,11 @@ namespace Project_Metro_Compiler
             }
         }
 
-         ~ISO()
-         {
-             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-             Dispose(disposing: false);
-         }
+        ~ISO()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: false);
+        }
 
         public void Dispose()
         {
