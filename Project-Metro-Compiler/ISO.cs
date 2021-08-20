@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using static Project_Metro_Compiler.MemoryMethods;
 namespace Project_Metro_Compiler
 {
-    class ISO : IDisposable
+    class ISO : ConsoleHelper, IDisposable
     {
         private readonly PrimaryVolume primaryVolume;
         private IntPtr pPrimaryVolume;
@@ -36,12 +36,31 @@ namespace Project_Metro_Compiler
         }
         protected byte[] Build()
         {
+
+            Console.Write("Generating the empty sector...");
             pEmptySector = emptySector.Build(out int emptySectorSize);
+            MarkLineAsComplete();
+
+            Console.Write("Building primary volumes...");
             pPrimaryVolume = primaryVolume.Build(out int primaryVolumeSize);
+            MarkLineAsComplete();
+
+            Console.Write("Creating boot records...");
             pBootRecord = bootRecord.Build(out int bootRecordSize);
+            MarkLineAsComplete();
+
+            Console.Write("Marking the volume descriptor...");
             pVdst = vdst.Build(out int vdstSize);
+            MarkLineAsComplete();
+
+            Console.Write("Validating the validation entry...");
             pValidationEntry =  validationEntry.Build(out int validationEntrySize);
+            MarkLineAsComplete();
+
+            Console.Write("Populating the data volume...");
             pDataVolume = dataVolume.Build(out int dataVolumeSize);
+            MarkLineAsComplete();
+
 
             int isoSize = primaryVolumeSize + bootRecordSize + vdstSize + validationEntrySize + dataVolumeSize + emptySectorSize;
             byte[] isoContent = new byte[isoSize];
@@ -149,25 +168,25 @@ namespace Project_Metro_Compiler
 
                 ZeroMemory(pPrimaryVolume, allocationSize);
 
-                //Write the Type Code.
+                // Write the Type Code.
                 Marshal.WriteByte(pPrimaryVolume + (int)Offsets.typeCode, TYPE_CODE);
 
-                //Write the Standard Identifier.
+                // Write the Standard Identifier.
                 WriteString(pPrimaryVolume + (int)Offsets.standardIdentifier, STANDARD_IDENTIFIER);
 
-                //Write the Version.
+                // Write the Version.
                 Marshal.WriteByte(pPrimaryVolume + (int)Offsets.version, VERSION);
 
-                //Write the first Unused byte.
+                // Write the first Unused byte.
                 Marshal.WriteByte(pPrimaryVolume + (int)Offsets.unused1, UNUSED1);
 
-                //Write the Volume Identifier.
+                // Write the Volume Identifier.
                 for (int i = 0; i < volumeIdentifier.Length; i++)
                     Marshal.WriteByte(pPrimaryVolume + (int)Offsets.volumeIdentifier + i, (byte)volumeIdentifier[i]);
 
-                //From Kris' research, everything else post this can be 0 and is thereby not required.
+                // From Kris' research, everything else post this can be 0 and is thereby not required.
 
-                //Return the PTR for freeing later
+                // Return the PTR for freeing later
                 return pPrimaryVolume;
             }
         };
@@ -202,20 +221,20 @@ namespace Project_Metro_Compiler
 
                 ZeroMemory(pBootRecord, allocationSize);
 
-                //Write the Type.
+                // Write the Type.
                 Marshal.WriteByte(pBootRecord + (int)Offsets.type, type);
 
-                //Write the Identifier.
+                // Write the Identifier.
                 WriteString(pBootRecord + (int)Offsets.identifier, IDENTIFIER);
 
-                //Write the Version.
+                // Write the Version.
                 Marshal.WriteByte(pBootRecord + (int)Offsets.version, VERSION);
 
-                //Write the boot system identifier.
+                // Write the boot system identifier.
                 for (int i = 0; i < bootSystemIdentifier.Length; i++)
                     Marshal.WriteByte(pBootRecord + (int)Offsets.bootSystemIdentifier + i, (byte)bootSystemIdentifier[i]);
 
-                //Write the validation entry index.
+                // Write the validation entry index.
                 Marshal.WriteByte(pBootRecord + (int)Offsets.bootSystemUse, BOOT_SYSTEM_USE);
 
                 return pBootRecord;

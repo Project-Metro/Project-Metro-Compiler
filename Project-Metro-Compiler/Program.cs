@@ -3,40 +3,48 @@ using System.Diagnostics;
 using System.IO;
 namespace Project_Metro_Compiler
 {
-    class Program
+    class Program : ConsoleHelper
     {
+
+        const string TITLE = @"
+██████╗ ██████╗  ██████╗      ██╗███████╗ ██████╗████████╗    ███╗   ███╗███████╗████████╗██████╗  ██████╗ 
+██╔══██╗██╔══██╗██╔═══██╗     ██║██╔════╝██╔════╝╚══██╔══╝    ████╗ ████║██╔════╝╚══██╔══╝██╔══██╗██╔═══██╗
+██████╔╝██████╔╝██║   ██║     ██║█████╗  ██║        ██║       ██╔████╔██║█████╗     ██║   ██████╔╝██║   ██║
+██╔═══╝ ██╔══██╗██║   ██║██   ██║██╔══╝  ██║        ██║       ██║╚██╔╝██║██╔══╝     ██║   ██╔══██╗██║   ██║
+██║     ██║  ██║╚██████╔╝╚█████╔╝███████╗╚██████╗   ██║       ██║ ╚═╝ ██║███████╗   ██║   ██║  ██║╚██████╔╝
+╚═╝     ╚═╝  ╚═╝ ╚═════╝  ╚════╝ ╚══════╝ ╚═════╝   ╚═╝       ╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ 
+                                                                                                           ";
         static int Main(string[] args)
         {
-
+            Console.WriteLine(TITLE);
             // command line arguments should be provided for source & target file
             // [0] = source file, [1] = target file -- file extensions must be provided
 
             if(args.Length != 2)
             {
-                Console.WriteLine($"Incorrect number of arguments given.\nExpected 2, got {args.Length}.");
+                Console.WriteLine($"Incorrect number of arguments given.\nExpected 2, got {args.Length}. Exiting");
                 return -1;
             }
             if(!File.Exists("Resources\\License"))
             {
-                Console.WriteLine("Unable to find nasm license file. Exiting\n");
-                Environment.Exit(0);
-            }
-
-
+                Console.WriteLine("Unable to find NASM license file. Exiting\n");
+                return -1;
+            }   
+            Console.WriteLine("**********************************************************************");
             Console.WriteLine(File.ReadAllText("Resources\\License"));
+            Console.WriteLine("**********************************************************************");
+
+            Console.Write("Creating binary file with NASM...");
             Process pNasm = new()
             {
-                
                 StartInfo =
                 {
                     FileName = "Resources\\nasm.exe",
-                    Arguments = $"-f bin {AppDomain.CurrentDomain.BaseDirectory + args[0]} -o {AppDomain.CurrentDomain.BaseDirectory + args[1]}.bin"
-                    
+                    Arguments = $"-f bin {AppDomain.CurrentDomain.BaseDirectory + args[0]} -o {AppDomain.CurrentDomain.BaseDirectory + args[1]}.bin",
+                    RedirectStandardError = true
                 }
-                
             };
-            pNasm.StartInfo.RedirectStandardOutput = true;
-            pNasm.StartInfo.RedirectStandardError = true;
+
             try
             {
                 pNasm.Start();
@@ -45,21 +53,51 @@ namespace Project_Metro_Compiler
             {
                 throw;
             }
+
             string nasmResult = pNasm.StandardError.ReadToEnd();
             if(nasmResult != "")
             {
+                MarkLineAsFailed();
                 Console.WriteLine(nasmResult);
                 Environment.Exit(0);
             }
+            MarkLineAsComplete();
 
+            Console.Write("Parsing binary file...");
             int hresult = Parser.Parse($"{args[1]}.bin");
             if (hresult == -1)
-                throw new NotImplementedException("ToDo");
+            {
+                MarkLineAsFailed();
+                Console.WriteLine("Failed to parse binary file. Exiting\n");
+                return -1;
+            }
+            MarkLineAsComplete();
 
             Compiler compiler = new(Parser.content);
-            compiler.CreateIso(args[1]);
 
+            Console.Write("Converting to ISO...");
+            compiler.CreateIso(args[1]);
+            MarkLineAsComplete();
+            Console.WriteLine("**********************************************************************");
+            Console.WriteLine("ISO Generation Completed.");
             return 0;
+        }
+    }
+    class ConsoleHelper
+    {
+        public static void MarkLineAsComplete()
+        {
+            ConsoleColor originalColour = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("COMPLETE!");
+            Console.ForegroundColor = originalColour;
+        }
+        public static void MarkLineAsFailed()
+        {
+            ConsoleColor originalColour = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("FAILED!");
+            Console.ForegroundColor = originalColour;
         }
     }
 }

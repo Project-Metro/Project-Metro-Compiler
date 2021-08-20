@@ -15,7 +15,6 @@ namespace Project_Metro_Compiler
         }
         public void CreateIso(string fileName)
         {
-
             try
             {
                 File.WriteAllBytes(fileName, isoContent);
