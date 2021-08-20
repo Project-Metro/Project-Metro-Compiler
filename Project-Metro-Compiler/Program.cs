@@ -26,16 +26,31 @@ namespace Project_Metro_Compiler
             Console.WriteLine(File.ReadAllText("Resources\\License"));
             Process pNasm = new()
             {
+                
                 StartInfo =
                 {
                     FileName = "Resources\\nasm.exe",
                     Arguments = $"-f bin {AppDomain.CurrentDomain.BaseDirectory + args[0]} -o {AppDomain.CurrentDomain.BaseDirectory + args[1]}.bin"
+                    
                 }
                 
             };
-
-            pNasm.Start();
-
+            pNasm.StartInfo.RedirectStandardOutput = true;
+            pNasm.StartInfo.RedirectStandardError = true;
+            try
+            {
+                pNasm.Start();
+            }
+            catch
+            {
+                throw;
+            }
+            string nasmResult = pNasm.StandardError.ReadToEnd();
+            if(nasmResult != "")
+            {
+                Console.WriteLine(nasmResult);
+                Environment.Exit(0);
+            }
 
             int hresult = Parser.Parse($"{args[1]}.bin");
             if (hresult == -1)
