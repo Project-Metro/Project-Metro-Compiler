@@ -12,11 +12,27 @@ namespace Project_Metro_Compiler
 ██████╔╝██████╔╝██║   ██║     ██║█████╗  ██║        ██║       ██╔████╔██║█████╗     ██║   ██████╔╝██║   ██║
 ██╔═══╝ ██╔══██╗██║   ██║██   ██║██╔══╝  ██║        ██║       ██║╚██╔╝██║██╔══╝     ██║   ██╔══██╗██║   ██║
 ██║     ██║  ██║╚██████╔╝╚█████╔╝███████╗╚██████╗   ██║       ██║ ╚═╝ ██║███████╗   ██║   ██║  ██║╚██████╔╝
-╚═╝     ╚═╝  ╚═╝ ╚═════╝  ╚════╝ ╚══════╝ ╚═════╝   ╚═╝       ╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ 
-                                                                                                           ";
+╚═╝     ╚═╝  ╚═╝ ╚═════╝  ╚════╝ ╚══════╝ ╚═════╝   ╚═╝       ╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ";
         static int Main(string[] args)
         {
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
             Console.WriteLine(TITLE);
+            Console.ForegroundColor = ConsoleColor.White;
+
+            Console.WriteLine("A University of Lincoln UROS (2021) project by ");
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Console.Write("Harry G Riley (19701020)");
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.Write(", ");
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Console.Write("Kristaps Jurkans (19701672)");
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.Write(", and ");
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Console.Write("Olegs Jakovlevs (25187386)");
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine('.');
+
             // command line arguments should be provided for source & target file
             // [0] = source file, [1] = target file -- file extensions must be provided
 
@@ -75,7 +91,7 @@ namespace Project_Metro_Compiler
 
             Compiler compiler = new(Parser.content);
 
-            Console.Write("Converting to ISO...");
+            Console.Write("Compiling data to ISO format...");
             compiler.CreateIso(args[1]);
             MarkLineAsComplete();
             Console.WriteLine("**********************************************************************");
