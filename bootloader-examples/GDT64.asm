@@ -2,6 +2,7 @@
 
 ; sources
 ; https://github.com/sedflix/lame_bootloader/
+; https://wiki.osdev.org/Setting_Up_Long_Mode
 
 GDT64:
     .Null: equ $ - GDT64

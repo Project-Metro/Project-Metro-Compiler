@@ -1,20 +1,8 @@
-; sources
-; http://3zanders.co.uk/2017/10/13/writing-a-bootloader/
-; https://en.wikipedia.org/wiki/BIOS_interrupt_call
-; http://www.ctyme.com/intr/rb-0069.htm
-; enable a20: ax = 2401h, int 15h http://www.ctyme.com/intr/rb-1336.htm
-; disable a20: ax = 2400h, int 15h http://www.ctyme.com/intr/rb-1335.htm
-; https://wiki.osdev.org/GDT
-; http://web.archive.org/web/20190424213806/http://www.osdever.net/tutorials/view/the-world-of-protected-mode
-; http://www.brackeen.com/vga/basics.html
+; 32 BIT BOOTLOADER
 
-; stuff to research
-; https://wiki.osdev.org/CPU_Registers_x86
-; https://stackoverflow.com/questions/43839960/is-eflags-a-general-purpose-register
-
-
-
-bits 16 ; instruction for nasm
+; NASM directives
+; https://www.nasm.us/xdoc/2.13.03/html/nasmdoc6.html
+bits 16
 org 0x7c00
 
 entry:
@@ -31,25 +19,22 @@ boot:
     mov ax, 0x3
     int 0x10
 
+    ; disable interrupts
     cli
 
-    ; load the data segment register (ds) with the address for the gdt-descriptor - this is DS:gdt_desc (offset shorthand)
-    ; we can't set the register directly - why?
-    ;xor ax, ax ; zero out ax
-    ;mov ds, ax ; move register ax (value: 0) into ds
-
-    lgdt [GDT32.Pointer] ; load global descriptor table (gdt) with a pointer to the descriptor
+    ; load global descriptor table (gdt) with a pointer to the descriptor
+    lgdt [GDT32.Pointer] 
 
     ; enabling protected mode
     mov eax, cr0
     or eax, 1
     mov cr0, eax
 
-    ; long jump (apparently clears the instruction pipeline)
+    ; long jump
     jmp GDT32.Code:now_protected_boot
 
-
-bits 32 ; nasm instruction
+; NASM directive
+bits 32
 
 printer:
     printer_loop:
@@ -72,8 +57,10 @@ now_protected_boot:
     mov fs, ax              ;   |
     mov gs, ax              ; --|
 
+    ; since we are in protected mode, we can no longer use bios interrupts to perform functions
+    ; so we write directly to VGA memory (starting at 0xb8000)
     mov esi, boot_msg
-    mov ebx, 0xb8000 ; vga memory start
+    mov ebx, 0xb8000
     call printer
 
     mov esi, mode_msg
@@ -84,3 +71,6 @@ now_protected_boot:
 
 boot_msg    db "UoL UVROS - Project Metro", 0
 mode_msg    db "Hello World in 32bit! (protected mode)", 0
+
+times 510 - ($-$$) db 0
+dw 0xaa55

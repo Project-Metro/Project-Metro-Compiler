@@ -3,11 +3,12 @@ org 0x7c00
 entry:
     jmp real_to_protected
 
+; import GDTs for other modes
 %include "GDT32.asm"
 %include "GDT64.asm"
 
-
-bits 16 ; nasm instruction
+; nasm directive
+bits 16 
 
 ; 16 bits to 32 bits
 real_to_protected:
@@ -35,7 +36,7 @@ real_to_protected:
 [bits 32]
 protected_to_long:
 
-    ; set up registers
+    ; load registers with GDT data segment offset
     mov ax, GDT32.Data
     mov ds, ax
     mov fs, ax
@@ -44,29 +45,34 @@ protected_to_long:
 
 
     ; root table - page-map level-4 table (PM4T)
-    mov edi, 0x3000 ; starting address
-    mov cr3, edi    ; used for translation of linear addresses into physical (for paging)
+    mov edi, 0x1000 ; starting address of 0x1000
+    mov cr3, edi    ; move base address of page entry into control register 3 (https://wiki.osdev.org/CPU_Registers_x86)
 
-    xor eax, eax    ; EAX = 0
+    xor eax, eax    ; set EAX to 0
 
-    ; each table has 512 entries
-    ; where each entry is 8 bytes large
-    ; so 8 * 512 = 4096 = page table size
     mov ecx, 4096
     rep stosd   ; for ECX times, store EAX value at whatever position EDI points to, incrementing/decrementing as you go
                 ; https://stackoverflow.com/questions/3818856/what-does-the-rep-stos-x86-assembly-instruction-sequence-do
     
     mov edi, cr3 ; restore original starting address
 
-    mov dword [edi], 0x4003 ; the '3' offset indicates that the first two bits should actually get set - this is to indicate
-                            ; that it is enabled and readable
+    ; according to https://wiki.osdev.org/Setting_Up_Long_Mode , this will set up the pointers to the other tables
+    ; using an offset of 0x0003 from the destination address supposedly sets the bits to indicate that the page is present
+    ;   and is also readable/writeable
+    mov dword [edi], 0x2003
     add edi, 0x1000
-    mov dword [edi], 0x5003
+    mov dword [edi], 0x3003
     add edi, 0x1000
-    mov dword [edi], 0x6003
+    mov dword [edi], 0x4003
     add edi, 0x1000
 
+    ; at this stage:
+    ; PML4T is at 0x1000
+    ; PDPT is at 0x2000
+    ; PDT is at 0x3000
+    ; PT is at 0x4000
 
+    ; used to identity map the first 2MiB (see https://wiki.osdev.org/Setting_Up_Long_Mode)
     mov ebx, 0x00000003
     mov ecx, 512
 
@@ -78,17 +84,17 @@ protected_to_long:
 
     ; enable pae-paging by setting the appropriate bit in the control register
     mov eax, cr4
-    or eax, 1 << 5          ; ?
+    or eax, 1 << 5
     mov cr4, eax
 
     mov ecx, 0xC0000080     ; magic value actually refers to the EFER MSR 
                             ;       -> 'extended feature enable register : model specific register
     rdmsr                   ; read model specific register
     or eax, 1 << 8          ; set long-mode bit (bit 8)
-    wrmsr
+    wrmsr                   ; write back to model specific register
 
     mov eax, cr0
-    or eax, 1 << 31         ; set PG bit
+    or eax, 1 << 31 | 1 << 0         ; set PG bit (31st) & PM bit (0th)
     mov cr0, eax
 
     ; ^ this has now entered us into 32b compatability submodee
@@ -101,7 +107,7 @@ protected_to_long:
 printer:
     printer_loop:
         lodsb
-        or al, al ; if zero
+        or al, al
         jz printer_exit
 
         or rax, 0x0F00
@@ -121,8 +127,8 @@ real_long_mode:
     mov gs, ax
     mov ss, ax
 
-    xor rax, rax ; clears out register RAX - if commented out then weird orange square is drawn
-                 ; at the end of the string
+    ; clears out register RAX - if commented out then weird orange square is drawn at the end of the string
+    xor rax, rax 
 
     mov rsi, boot_msg
     mov rbx, 0xb8000
@@ -136,3 +142,5 @@ real_long_mode:
 
 boot_msg db "UoL UVROS - Project Metro",0
 l_mode db "Hello World in 64bit! (long mode)",0
+times 510 - ($-$$) db 0
+dw 0xaa55
