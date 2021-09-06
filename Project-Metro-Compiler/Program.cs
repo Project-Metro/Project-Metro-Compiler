@@ -41,36 +41,68 @@ namespace Project_Metro_Compiler
                 Console.WriteLine($"Incorrect number of arguments given.\nExpected 2, got {args.Length}. Exiting");
                 return -1;
             }
-            if (!File.Exists("Resources\\License"))
+            if (!File.Exists("Resources/LICENSE"))
             {
+                string license_path = Directory.GetCurrentDirectory() + "/Resources/LICENSE";
+                Console.WriteLine(license_path);
+                Console.WriteLine(File.Exists(license_path));
                 Console.WriteLine("Unable to find NASM license file. Exiting\n");
                 return -1;
             }
             Console.WriteLine("**********************************************************************");
-            Console.WriteLine(File.ReadAllText("Resources\\License"));
+            Console.WriteLine(File.ReadAllText("Resources/LICENSE"));
             Console.WriteLine("**********************************************************************");
 
-            Console.Write("Creating binary file with NASM...");
-            Process pNasm = new()
-            {
-                StartInfo =
-                {
-                    FileName = "Resources\\nasm.exe",
-                    Arguments = $"-f bin {AppDomain.CurrentDomain.BaseDirectory + args[0]} -o {AppDomain.CurrentDomain.BaseDirectory + args[1]}.bin",
-                    RedirectStandardError = true
+            // Console.Write("Creating binary file with NASM...");
+            // Process pNasm = new()
+            // {
+            //     StartInfo =
+            //     {
+            //         FileName = "Resources/nasm.exe",
+            //         Arguments = $"-f bin {AppDomain.CurrentDomain.BaseDirectory + args[0]} -o {AppDomain.CurrentDomain.BaseDirectory + args[1]}.bin",
+            //         RedirectStandardError = true
+            //     }
+            // };
+
+            // try
+            // {
+            //     pNasm.Start();
+            // }
+            // catch
+            // {
+            //     throw;
+            // }
+
+            Console.Write("Checking if NASM is installed...");
+            Process pCheck = new(){
+                StartInfo ={
+                    FileName = "which",
+                    Arguments = "nasm",
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true,
+                    CreateNoWindow = false
                 }
             };
 
-            try
-            {
-                pNasm.Start();
-            }
-            catch
-            {
+            try {
+                pCheck.Start();
+            } catch {
                 throw;
             }
 
-            string nasmResult = pNasm.StandardError.ReadToEnd();
+            string pCheckoutput = pCheck.StandardOutput.ReadToEnd();
+            pCheck.WaitForExit();
+
+            if (pCheckoutput == ""){
+                MarkLineAsFailed();
+                Console.WriteLine("NASM install not found, cannot continue.");
+                Environment.Exit(-1);
+            }
+
+            return 0;
+
+            string nasmResult = null;
+            //string nasmResult = pNasm.StandardError.ReadToEnd();
             if (nasmResult != "")
             {
                 MarkLineAsFailed();
