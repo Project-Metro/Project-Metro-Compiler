@@ -44,18 +44,16 @@ namespace Project_Metro_Compiler
             if (!File.Exists("Resources/LICENSE"))
             {
                 string license_path = Directory.GetCurrentDirectory() + "/Resources/LICENSE";
-                Console.WriteLine(license_path);
-                Console.WriteLine(File.Exists(license_path));
                 Console.WriteLine("Unable to find NASM license file. Exiting\n");
                 return -1;
             }
             Console.WriteLine("**********************************************************************");
             Console.WriteLine(File.ReadAllText("Resources/LICENSE"));
-            // Console.WriteLine(Directory.GetCurrentDirectory());
             Console.WriteLine("**********************************************************************");
 
             Console.WriteLine($"Current working directory is: {Directory.GetCurrentDirectory()}");
 
+            // calling a command to check if NASM is installed on the machine
             Console.Write("Checking if NASM is installed...");
             Process pCheck = new(){
                 StartInfo ={
@@ -75,7 +73,8 @@ namespace Project_Metro_Compiler
 
             string pCheckoutput = pCheck.StandardOutput.ReadToEnd();
             pCheck.WaitForExit();
-
+            
+            // if the command returns nothing, then no NASM install was found
             if (pCheckoutput == ""){
                 MarkLineAsFailed();
                 Console.WriteLine("NASM install not found, cannot continue.");
@@ -102,7 +101,6 @@ namespace Project_Metro_Compiler
                 throw;
             }
 
-            //string nasmResult = null;
             string nasmResult = pNasm.StandardError.ReadToEnd();
             if (nasmResult != "")
             {
