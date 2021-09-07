@@ -51,27 +51,10 @@ namespace Project_Metro_Compiler
             }
             Console.WriteLine("**********************************************************************");
             Console.WriteLine(File.ReadAllText("Resources/LICENSE"));
+            // Console.WriteLine(Directory.GetCurrentDirectory());
             Console.WriteLine("**********************************************************************");
 
-            // Console.Write("Creating binary file with NASM...");
-            // Process pNasm = new()
-            // {
-            //     StartInfo =
-            //     {
-            //         FileName = "Resources/nasm.exe",
-            //         Arguments = $"-f bin {AppDomain.CurrentDomain.BaseDirectory + args[0]} -o {AppDomain.CurrentDomain.BaseDirectory + args[1]}.bin",
-            //         RedirectStandardError = true
-            //     }
-            // };
-
-            // try
-            // {
-            //     pNasm.Start();
-            // }
-            // catch
-            // {
-            //     throw;
-            // }
+            Console.WriteLine($"Current working directory is: {Directory.GetCurrentDirectory()}");
 
             Console.Write("Checking if NASM is installed...");
             Process pCheck = new(){
@@ -99,10 +82,28 @@ namespace Project_Metro_Compiler
                 Environment.Exit(-1);
             }
 
-            return 0;
+            MarkLineAsComplete();
 
-            string nasmResult = null;
-            //string nasmResult = pNasm.StandardError.ReadToEnd();
+            Console.Write("Creating binary file with NASM...");
+            Process pNasm = new()
+            {
+                StartInfo =
+                {
+                    FileName = $"nasm",
+                    Arguments = $"-f bin {AppDomain.CurrentDomain.BaseDirectory + args[0]} -o {AppDomain.CurrentDomain.BaseDirectory + args[1]}.bin",
+                    RedirectStandardError = true
+                }
+            };
+
+            try{
+                pNasm.Start();
+            }
+            catch{
+                throw;
+            }
+
+            //string nasmResult = null;
+            string nasmResult = pNasm.StandardError.ReadToEnd();
             if (nasmResult != "")
             {
                 MarkLineAsFailed();
@@ -112,7 +113,7 @@ namespace Project_Metro_Compiler
             MarkLineAsComplete();
 
             Console.Write("Parsing binary file...");
-            int hresult = Parser.Parse($"{args[1]}.bin");
+            int hresult = Parser.Parse($"{AppDomain.CurrentDomain.BaseDirectory + args[1]}.bin");
             if (hresult == -1)
             {
                 MarkLineAsFailed();
@@ -124,7 +125,7 @@ namespace Project_Metro_Compiler
             Compiler compiler = new(Parser.content);
 
             Console.Write("Compiling data to ISO format...");
-            compiler.CreateIso(args[1]);
+            compiler.CreateIso(AppDomain.CurrentDomain.BaseDirectory + args[1]);
             MarkLineAsComplete();
             Console.WriteLine("**********************************************************************");
             Console.WriteLine("ISO Generation Completed.");
